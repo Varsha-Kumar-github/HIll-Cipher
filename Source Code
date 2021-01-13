@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import numpy as np
+import numpy.matlib
+from numpy.linalg import inv
+from pprint import pprint
+
+def generateMatrix():    
+   M = np.array([[17,17,5],[21,18,21],[2,2,19]])    
+   print("M:" , M)    
+   return M
+   
+def hill_enc(M, plaintext):    
+
+# M is the encryption matrix - Let's assume it's always 3x3 for now    
+# plaintext is the plaintext string of arbitrary length   
+# according to the Hill cipher. Pad the plaintext with 'x' characters to make its length a multiple of 3. 
+# len(plaintext) : gives the length of the plaintext string   
+# c will be the resulting ciphertext
+
+  c = []    
+  if (plaintext == plaintext.lower()):        
+    p_list = [ord(c) - 97 for c in plaintext]    
+  else:         
+    p_list = [ord(c) - 65 for c in plaintext]    
+  for i in range(0, len(p_list),3):        
+    ch = p_list[i:i+3]    
+  c_num = np.matmul(M,ch)%26    
+  
+  c = [chr(ind + 97) for ind in c_num]    
+  c = ''.join(c).upper()    
+  return c
+  
+def hill_dec(M, ciphertext):  
+  
+  # p will be the resulting plaintext  
+  
+  p=[]    
+  Mod26invTable = {}    
+  for m in range(26):        
+    for n in range(26):            
+      if (m*n)%26==1:                
+        Mod26invTable[m] = n
+
+  Minv = np.linalg.inv(M)     #M inverse    
+  Mdet = np.linalg.det(M)     #M det     
+  
+  Mdet26 = Mdet%26    
+  if Mdet26 in Mod26invTable:        
+    Mdetinv26 = Mod26invTable[Mdet26]   
+  else:       
+    Mdetinv26 = None    
+    
+  Madj = Mdet*Minv    
+  Madj26 = Madj%26    
+  
+  Minv26 = (Mdetinv26*Madj26)%26    
+  Minv26 = np.matrix.round(Minv26, 0)%26    
+  
+  MMinv26 = np.matmul(M,Minv26)%26    
+  MMinv26 = np.matrix.round(MMinv26,0)   
+  
+  if (ciphertext == ciphertext.lower()):       
+    c_list = [ord(i) - 97 for i in ciphertext]    
+  else:         
+    c_list = [ord(i) - 65 for i in ciphertext]    
+  for i in range(0, len(c_list),3):        
+    ph = c_list[i:i+3]   
+  
+  p_num = np.matmul(Minv26,ph)%26   
+  
+  p = [chr(int(ind) + 97) for ind in p_num]    
+  p = ''.join(p).upper()    
+  return(p)
+  
+if __name__=="__main__":   
+  M = generateMatrix()    
+  plaintext = "ACT"    
+  ciphertext = hill_enc(M, plaintext)    
+  print("Ciphertext:" ,ciphertext)    
+  original = hill_dec(M, ciphertext)    
+  print("Plaintext:" ,original)
